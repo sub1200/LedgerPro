@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users        User[]
+  accounts     Account[]
+  customers    Customer[]
+  vendors      Vendor[]
+  invoices     Invoice[]
+  bills        Bill[]
+  expenses     Expense[]
+  journalEntries JournalEntry[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("user") // admin, manager, user
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Account {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique // 1000, 1100, etc.
+  name        String
+  type        String   // asset, liability, equity, revenue, expense
+  parentId    Int?
+  parent      Account? @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children    Account[] @relation("AccountHierarchy")
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  debitEntries  JournalLine[] @relation("DebitAccount")
+  creditEntries JournalLine[] @relation("CreditAccount")
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  
+  invoices Invoice[]
+}
+
+model Vendor {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  
+  bills Bill[]
+}
+
+model Invoice {
+  id          Int      @id @default(autoincrement())
+  invoiceNumber String @unique
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  issueDate   DateTime
+  dueDate     DateTime
+  status      String   @default("draft") // draft, sent, paid, overdue
+  subtotal    Float
+  taxAmount   Float
+  total       Float
+  currency    String   @default("USD")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lines InvoiceLine[]
+}
+
+model InvoiceLine {
+  id          Int     @id @default(autoincrement())
+  invoiceId   Int
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+}
+
+model Bill {
+  id          Int      @id @default(autoincrement())
+  billNumber  String   @unique
+  vendorId    Int
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  issueDate   DateTime
+  dueDate     DateTime
+  status      String   @default("draft") // draft, received, paid
+  subtotal    Float
+  taxAmount   Float
+  total       Float
+  currency    String   @default("USD")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lines BillLine[]
+}
+
+model BillLine {
+  id          Int     @id @default(autoincrement())
+  billId      Int
+  bill        Bill    @relation(fields: [billId], references: [id])
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+  amount      Float
+  category    String
+  merchant    String?
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  aiCategory  String?
+  aiConfidence Float?
+  receiptUrl String?
+  createdAt   DateTime @default(now())
+}
+
+model JournalEntry {
+  id          Int      @id @default(autoincrement())
+  entryNumber String   @unique
+  date        DateTime
+  description String
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  status      String   @default("draft") // draft, posted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lines JournalLine[]
+}
+
+model JournalLine {
+  id            Int        @id @default(autoincrement())
+  journalEntryId Int
+  journalEntry  JournalEntry @relation(fields: [journalEntryId], references: [id])
+  accountId     Int
+  account       Account    @relation(fields: [accountId], references: [id])
+  debit         Float?
+  credit        Float?
+  memo          String?
+}

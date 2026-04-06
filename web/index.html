@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LedgerPro - نظام المحاسبة الاحترافي</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-secondary: #1e293b;
+            --dark-tertiary: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .app { display: flex; min-height: 100vh; }
+        
+        .sidebar {
+            width: 260px;
+            background: var(--dark-secondary);
+            border-left: 1px solid var(--border);
+            padding: 20px;
+            display: none;
+        }
+        
+        @media (min-width: 768px) { .sidebar { display: block; } }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--dark-tertiary);
+            color: var(--text);
+        }
+        
+        .nav-item.active { background: var(--primary); color: white; }
+        .nav-icon { margin-left: 12px; }
+        
+        .main { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title { font-size: 28px; font-weight: bold; }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .kpi-card {
+            background: var(--dark-secondary);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .kpi-label { color: var(--text-muted); font-size: 14px; margin-bottom: 8px; }
+        .kpi-value { font-size: 28px; font-weight: bold; }
+        .kpi-value.positive { color: var(--success); }
+        .kpi-value.negative { color: var(--danger); }
+        
+        .table-container {
+            background: var(--dark-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; }
+        
+        th, td {
+            padding: 14px 16px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--dark-tertiary);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        tr:hover { background: var(--dark-tertiary); }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--dark-tertiary); color: var(--text); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        .form-group { margin-bottom: 16px; }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 15px;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: var(--dark-secondary);
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-draft { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+        .badge-sent { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-paid { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-overdue { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-paid_out { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        
+        .bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--dark-secondary);
+            border-top: 1px solid var(--border);
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+        
+        @media (min-width: 768px) { .bottom-nav { display: none; } }
+        
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+        }
+        
+        .bottom-nav-item.active { color: var(--primary); }
+        
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .action-card {
+            flex: 1;
+            min-width: 120px;
+            padding: 20px;
+            background: var(--dark-secondary);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        
+        .action-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .action-icon { font-size: 32px; margin-bottom: 10px; }
+        .action-label { color: var(--text); font-weight: 600; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+        
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        
+        .text-left { text-align: left; }
+        .w-full { width: 100%; }
+        .mt-2 { margin-top: 12px; }
+        .mt-4 { margin-top: 24px; }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--dark-tertiary);
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <aside class="sidebar">
+            <div class="logo">📊 LedgerPro</div>
+            <nav>
+                <div class="nav-item active" data-page="dashboard">📊 لوحة التحكم</div>
+                <div class="nav-item" data-page="accounts">🏦 شجرة الحسابات</div>
+                <div class="nav-item" data-page="invoices">🧾 الفواتير</div>
+                <div class="nav-item" data-page="bills">📄 فواتير الموردين</div>
+                <div class="nav-item" data-page="expenses">💳 المصروفات</div>
+                <div class="nav-item" data-page="journal">📝 القيود المحاسبية</div>
+                <div class="nav-item" data-page="customers">👥 العملاء</div>
+                <div class="nav-item" data-page="vendors">🏢 الموردون</div>
+            </nav>
+        </aside>
+        
+        <main class="main">
+            <div class="header">
+                <div class="page-title" id="page-title">لوحة التحكم</div>
+                <button class="btn btn-secondary" onclick="resetData()">♻️ إعادة تعيين</button>
+            </div>
+            
+            <!-- Dashboard -->
+            <div id="page-dashboard" class="page active">
+                <div class="quick-actions">
+                    <div class="action-card" onclick="openModal('invoice')">
+                        <div class="action-icon">🧾</div>
+                        <div class="action-label">فاتورة جديدة</div>
+                    </div>
+                    <div class="action-card" onclick="openModal('expense')">
+                        <div class="action-icon">💳</div>
+                        <div class="action-label">مصروف جديد</div>
+                    </div>
+                    <div class="action-card" onclick="openModal('journal')">
+                        <div class="action-icon">📝</div>
+                        <div class="action-label">قيد جديد</div>
+                    </div>
+                    <div class="action-card" onclick="openModal('customer')">
+                        <div class="action-icon">👤</div>
+                        <div class="action-label">عميل جديد</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">الرصيد النقدي</div>
+                        <div class="kpi-value" id="kpi-cash">$0.00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">الذمم المدينة</div>
+                        <div class="kpi-value" id="kpi-ar">$0.00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">الذمم الدائنة</div>
+                        <div class="kpi-value" id="kpi-ap">$0.00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">صافي الربح</div>
+                        <div class="kpi-value" id="kpi-profit">$0.00</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">الإيرادات</div>
+                        <div class="kpi-value positive" id="kpi-revenue">$0.00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">المصروفات</div>
+                        <div class="kpi-value negative" id="kpi-expenses">$0.00</div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>آخر الفواتير</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr>
+                        </thead>
+                        <tbody id="recent-invoices"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Accounts -->
+            <div id="page-accounts" class="page">
+                <button class="btn btn-primary" onclick="openModal('account')">+ إضافة حساب</button>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>الكود</th><th>اسم الحساب</th><th>النوع</th><th>الرصيد</th><th></th></tr>
+                        </thead>
+                        <tbody id="accounts-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Invoices -->
+            <div id="page-invoices" class="page">
+                <div class="flex-between">
+                    <button class="btn btn-primary" onclick="openModal('invoice')">+ فاتورة جديدة</button>
+                </div>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>الرقم</th><th>العميل</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th><th></th></tr>
+                        </thead>
+                        <tbody id="invoices-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Bills -->
+            <div id="page-bills" class="page">
+                <button class="btn btn-primary" onclick="openModal('bill')">+ فاتورة مورد</button>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>الرقم</th><th>المورد</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th><th></th></tr>
+                        </thead>
+                        <tbody id="bills-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Expenses -->
+            <div id="page-expenses" class="page">
+                <button class="btn btn-primary" onclick="openModal('expense')">+ مصروف جديد</button>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>التاريخ</th><th>الوصف</th><th>الفئة</th><th>المبلغ</th><th></th></tr>
+                        </thead>
+                        <tbody id="expenses-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Journal -->
+            <div id="page-journal" class="page">
+                <button class="btn btn-primary" onclick="openModal('journal')">+ قيد جديد</button>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>الرقم</th><th>التاريخ</th><th>الوصف</th><th>الحالة</th><th></th></tr>
+                        </thead>
+                        <tbody id="journal-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Customers -->
+            <div id="page-customers" class="page">
+                <button class="btn btn-primary" onclick="openModal('customer')">+ عميل جديد</button>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>الاسم</th><th>البريد</th><th>الهاتف</th><th></th></tr>
+                        </thead>
+                        <tbody id="customers-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Vendors -->
+            <div id="page-vendors" class="page">
+                <button class="btn btn-primary" onclick="openModal('vendor')">+ مورد جديد</button>
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr><th>الاسم</th><th>البريد</th><th>الهاتف</th><th></th></tr>
+                        </thead>
+                        <tbody id="vendors-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        
+        <nav class="bottom-nav">
+            <div class="bottom-nav-item active" data-page="dashboard">
+                <span style="font-size:24px">📊</span>الرئيسية
+            </div>
+            <div class="bottom-nav-item" data-page="accounts">
+                <span style="font-size:24px">🏦</span>الحسابات
+            </div>
+            <div class="bottom-nav-item" data-page="invoices">
+                <span style="font-size:24px">🧾</span>الفواتير
+            </div>
+            <div class="bottom-nav-item" data-page="expenses">
+                <span style="font-size:24px">💳</span>المصروفات
+            </div>
+        </nav>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal" id="generic-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">عنوان</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // Local Storage Data Manager
+        const DB = {
+            getData(key) {
+                const data = localStorage.getItem('ledger_' + key);
+                return data ? JSON.parse(data) : [];
+            },
+            setData(key, data) {
+                localStorage.setItem('ledger_' + key, JSON.stringify(data));
+            },
+            init() {
+                if (!localStorage.getItem('ledger_inited')) {
+                    // Seed default accounts
+                    const accounts = [
+                        { id: 1, code: '1000', name: 'النقد', type: 'asset', balance: 0 },
+                        { id: 2, code: '1100', name: 'الذمم المدينة', type: 'asset', balance: 0 },
+                        { id: 3, code: '1200', name: 'المخزون', type: 'asset', balance: 0 },
+                        { id: 4, code: '1500', name: 'الأصول الثابتة', type: 'asset', balance: 0 },
+                        { id: 5, code: '2000', name: 'الذمم الدائنة', type: 'liability', balance: 0 },
+                        { id: 6, code: '2100', name: 'ضريبة القيمة المضافة', type: 'liability', balance: 0 },
+                        { id: 7, code: '2500', name: 'القروض', type: 'liability', balance: 0 },
+                        { id: 8, code: '3000', name: 'رأس المال', type: 'equity', balance: 0 },
+                        { id: 9, code: '3100', name: 'الأرباح المحتجزة', type: 'equity', balance: 0 },
+                        { id: 10, code: '4000', name: 'إيرادات المبيعات', type: 'revenue', balance: 0 },
+                        { id: 11, code: '4100', name: 'إيرادات الخدمات', type: 'revenue', balance: 0 },
+                        { id: 12, code: '5000', name: 'تكلفة البضاعة المباعة', type: 'expense', balance: 0 },
+                        { id: 13, code: '5100', name: 'مصروفات الرواتب', type: 'expense', balance: 0 },
+                        { id: 14, code: '5200', name: 'مصروفات الإيجار', type: 'expense', balance: 0 },
+                        { id: 15, code: '5300', name: 'مصروفات كهرباء ومياه', type: 'expense', balance: 0 },
+                        { id: 16, code: '5400', name: 'مصروفات التسويق', type: 'expense', balance: 0 },
+                        { id: 17, code: '5500', name: 'مصروفات إدارية', type: 'expense', balance: 0 }
+                    ];
+                    this.setData('accounts', accounts);
+                    this.setData('customers', []);
+                    this.setData('vendors', []);
+                    this.setData('invoices', []);
+                    this.setData('bills', []);
+                    this.setData('expenses', []);
+                    this.setData('journal', []);
+                    localStorage.setItem('ledger_inited', 'true');
+                }
+            }
+        };
+        
+        let currentPage = 'dashboard';
+        
+        function init() {
+            DB.init();
+            setupNavigation();
+            loadDashboard();
+        }
+        
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    navigate(page);
+                });
+            });
+        }
+        
+        function navigate(page) {
+            currentPage = page;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            
+            document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(n => {
+                n.classList.remove('active');
+                if (n.dataset.page === page) n.classList.add('active');
+            });
+            
+            const titles = {
+                dashboard: 'لوحة التحكم',
+                accounts: 'شجرة الحسابات',
+                invoices: 'الفواتير',
+                bills: 'فواتير الموردين',
+                expenses: 'المصروفات',
+                journal: 'القيود المحاسبية',
+                customers: 'العملاء',
+                vendors: 'الموردون'
+            };
+            document.getElementById('page-title').textContent = titles[page] || page;
+            
+            if (page === 'dashboard') loadDashboard();
+            if (page === 'accounts') loadAccounts();
+            if (page === 'invoices') loadInvoices();
+            if (page === 'bills') loadBills();
+            if (page === 'expenses') loadExpenses();
+            if (page === 'journal') loadJournal();
+            if (page === 'customers') loadCustomers();
+            if (page === 'vendors') loadVendors();
+        }
+        
+        function loadDashboard() {
+            const accounts = DB.getData('accounts');
+            const invoices = DB.getData('invoices');
+            const expenses = DB.getData('expenses');
+            
+            const cash = accounts.find(a => a.code === '1000')?.balance || 0;
+            const ar = accounts.find(a => a.code === '1100')?.balance || 0;
+            const ap = Math.abs(accounts.find(a => a.code === '2000')?.balance || 0);
+            const revenue = accounts.find(a => a.code === '4000')?.balance || 0;
+            const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+            const profit = revenue - totalExpenses;
+            
+            document.getElementById('kpi-cash').textContent = formatCurrency(cash);
+            document.getElementById('kpi-ar').textContent = formatCurrency(ar);
+            document.getElementById('kpi-ap').textContent = formatCurrency(ap);
+            document.getElementById('kpi-profit').textContent = formatCurrency(profit);
+            document.getElementById('kpi-profit').className = 'kpi-value ' + (profit >= 0 ? 'positive' : 'negative');
+            document.getElementById('kpi-revenue').textContent = formatCurrency(revenue);
+            document.getElementById('kpi-expenses').textContent = formatCurrency(totalExpenses);
+            
+            const recentInvoices = invoices.slice(-5).reverse();
+            const html = recentInvoices.length ? recentInvoices.map(inv => `
+                <tr>
+                    <td>${inv.number}</td>
+                    <td>${inv.customerName}</td>
+                    <td>${formatCurrency(inv.total)}</td>
+                    <td><span class="badge badge-${inv.status}">${inv.status}</span></td>
+                </tr>
+            `).join('') : '<tr><td colspan="4" class="empty-state">لا توجد فواتير</td></tr>';
+            document.getElementById('recent-invoices').innerHTML = html;
+        }
+        
+        function loadAccounts() {
+            const accounts = DB.getData('accounts');
+            const html = accounts.map(acc => `
+                <tr>
+                    <td>${acc.code}</td>
+                    <td>${acc.name}</td>
+                    <td>${acc.type}</td>
+                    <td>${formatCurrency(acc.balance)}</td>
+                    <td><button class="delete-btn" onclick="deleteAccount(${acc.id})">حذف</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="empty-state">لا توجد حسابات</td></tr>';
+            document.getElementById('accounts-list').innerHTML = html;
+        }
+        
+        function loadInvoices() {
+            const invoices = DB.getData('invoices');
+            const html = invoices.slice().reverse().map(inv => `
+                <tr>
+                    <td>${inv.number}</td>
+                    <td>${inv.customerName}</td>
+                    <td>${inv.date}</td>
+                    <td>${formatCurrency(inv.total)}</td>
+                    <td><span class="badge badge-${inv.status}">${inv.status}</span></td>
+                    <td>
+                        ${inv.status === 'draft' ? `<button class="btn btn-success" style="padding:4px 8px;font-size:12px" onclick="updateInvoiceStatus(${inv.id},'paid')">دفع</button>` : ''}
+                        <button class="delete-btn" onclick="deleteInvoice(${inv.id})">حذف</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="empty-state">لا توجد فواتير</td></tr>';
+            document.getElementById('invoices-list').innerHTML = html;
+        }
+        
+        function loadBills() {
+            const bills = DB.getData('bills');
+            const html = bills.slice().reverse().map(bill => `
+                <tr>
+                    <td>${bill.number}</td>
+                    <td>${bill.vendorName}</td>
+                    <td>${bill.date}</td>
+                    <td>${formatCurrency(bill.total)}</td>
+                    <td><span class="badge badge-${bill.status}">${bill.status}</span></td>
+                    <td>
+                        ${bill.status === 'draft' ? `<button class="btn btn-success" style="padding:4px 8px;font-size:12px" onclick="updateBillStatus(${bill.id},'paid')">دفع</button>` : ''}
+                        <button class="delete-btn" onclick="deleteBill(${bill.id})">حذف</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="empty-state">لا توجد فواتير موردين</td></tr>';
+            document.getElementById('bills-list').innerHTML = html;
+        }
+        
+        function loadExpenses() {
+            const expenses = DB.getData('expenses');
+            const html = expenses.slice().reverse().map(exp => `
+                <tr>
+                    <td>${exp.date}</td>
+                    <td>${exp.description}</td>
+                    <td>${exp.category}</td>
+                    <td>${formatCurrency(exp.amount)}</td>
+                    <td><button class="delete-btn" onclick="deleteExpense(${exp.id})">حذف</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="empty-state">لا توجد مصروفات</td></tr>';
+            document.getElementById('expenses-list').innerHTML = html;
+        }
+        
+        function loadJournal() {
+            const journal = DB.getData('journal');
+            const html = journal.slice().reverse().map(entry => `
+                <tr>
+                    <td>${entry.number}</td>
+                    <td>${entry.date}</td>
+                    <td>${entry.description}</td>
+                    <td><span class="badge badge-${entry.status}">${entry.status}</span></td>
+                    <td><button class="delete-btn" onclick="deleteJournal(${entry.id})">حذف</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="empty-state">لا توجد قيود</td></tr>';
+            document.getElementById('journal-list').innerHTML = html;
+        }
+        
+        function loadCustomers() {
+            const customers = DB.getData('customers');
+            const html = customers.map(c => `
+                <tr>
+                    <td>${c.name}</td>
+                    <td>${c.email || '-'}</td>
+                    <td>${c.phone || '-'}</td>
+                    <td><button class="delete-btn" onclick="deleteCustomer(${c.id})">حذف</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="empty-state">لا توجد عملاء</td></tr>';
+            document.getElementById('customers-list').innerHTML = html;
+        }
+        
+        function loadVendors() {
+            const vendors = DB.getData('vendors');
+            const html = vendors.map(v => `
+                <tr>
+                    <td>${v.name}</td>
+                    <td>${v.email || '-'}</td>
+                    <td>${v.phone || '-'}</td>
+                    <td><button class="delete-btn" onclick="deleteVendor(${v.id})">حذف</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="empty-state">لا توجد موردين</td></tr>';
+            document.getElementById('vendors-list').innerHTML = html;
+        }
+        
+        function openModal(type) {
+            const modal = document.getElementById('generic-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            
+            let html = '';
+            
+            if (type === 'expense') {
+                title.textContent = 'مصروف جديد';
+                html = `
+                    <div class="form-group"><label>الوصف</label><input type="text" id="expense-desc" placeholder="مثال: شراء مواد"></div>
+                    <div class="form-group"><label>المبلغ</label><input type="number" id="expense-amount" placeholder="0.00" step="0.01"></div>
+                    <div class="form-group">
+                        <label>الفئة</label>
+                        <select id="expense-category">
+                            <option value="Food">🍔 طعام</option>
+                            <option value="Transport">🚗 مواصلات</option>
+                            <option value="Supplies">📝 قرطاسية</option>
+                            <option value="Utilities">💡 خدمات</option>
+                            <option value="Marketing">📢 تسويق</option>
+                            <option value="Rent">🏠 إيجار</option>
+                            <option value="Salaries">👥 رواتب</option>
+                            <option value="Other">📦 أخرى</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>التاريخ</label><input type="date" id="expense-date" value="${new Date().toISOString().split('T')[0]}"></div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveExpense()">حفظ</button>
+                `;
+            } else if (type === 'invoice') {
+                const customers = DB.getData('customers');
+                title.textContent = 'فاتورة جديدة';
+                html = `
+                    <div class="form-group">
+                        <label>العميل</label>
+                        <select id="invoice-customer">${customers.map(c => `<option value="${c.name}">${c.name}</option>`).join('') || '<option value="">أضف عملاء أولاً</option>'}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>المنتجات</label>
+                        <textarea id="invoice-items" rows="3" placeholder="منتج,数量,سعر&#10;مثال:&#10;商品A,2,50"></textarea>
+                    </div>
+                    <div class="form-group"><label>نسبة الضريبة %</label><input type="number" id="invoice-tax" value="15"></div>
+                    <div class="form-group"><label>تاريخ الاستحقاق</label><input type="date" id="invoice-due"></div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveInvoice()">حفظ كمسودة</button>
+                `;
+            } else if (type === 'bill') {
+                const vendors = DB.getData('vendors');
+                title.textContent = 'فاتورة مورد';
+                html = `
+                    <div class="form-group">
+                        <label>المورد</label>
+                        <select id="bill-vendor">${vendors.map(v => `<option value="${v.name}">${v.name}</option>`).join('') || '<option value="">أضف موردين أولاً</option>'}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>المنتجات</label>
+                        <textarea id="bill-items" rows="3" placeholder="منتج,数量,سعر&#10;مثال:&#10;商品A,2,50"></textarea>
+                    </div>
+                    <div class="form-group"><label>نسبة الضريبة %</label><input type="number" id="bill-tax" value="15"></div>
+                    <div class="form-group"><label>تاريخ الاستحقاق</label><input type="date" id="bill-due"></div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveBill()">حفظ كمسودة</button>
+                `;
+            } else if (type === 'customer') {
+                title.textContent = 'عميل جديد';
+                html = `
+                    <div class="form-group"><label>الاسم</label><input type="text" id="cust-name" placeholder="اسم العميل"></div>
+                    <div class="form-group"><label>البريد</label><input type="email" id="cust-email" placeholder="email@example.com"></div>
+                    <div class="form-group"><label>الهاتف</label><input type="tel" id="cust-phone" placeholder="+966 50 000 0000"></div>
+                    <div class="form-group"><label>العنوان</label><textarea id="cust-address" rows="2"></textarea></div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveCustomer()">حفظ</button>
+                `;
+            } else if (type === 'vendor') {
+                title.textContent = 'مورد جديد';
+                html = `
+                    <div class="form-group"><label>الاسم</label><input type="text" id="vend-name" placeholder="اسم المورد"></div>
+                    <div class="form-group"><label>البريد</label><input type="email" id="vend-email" placeholder="email@example.com"></div>
+                    <div class="form-group"><label>الهاتف</label><input type="tel" id="vend-phone" placeholder="+966 50 000 0000"></div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveVendor()">حفظ</button>
+                `;
+            } else if (type === 'account') {
+                title.textContent = 'حساب جديد';
+                html = `
+                    <div class="form-group"><label>الكود</label><input type="text" id="acc-code" placeholder="1600"></div>
+                    <div class="form-group"><label>الاسم</label><input type="text" id="acc-name"></div>
+                    <div class="form-group">
+                        <label>النوع</label>
+                        <select id="acc-type">
+                            <option value="asset">أصل</option>
+                            <option value="liability">التزام</option>
+                            <option value="equity">حقوق ملكية</option>
+                            <option value="revenue">إيراد</option>
+                            <option value="expense">مصروف</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveAccount()">حفظ</button>
+                `;
+            } else if (type === 'journal') {
+                const accounts = DB.getData('accounts');
+                title.textContent = 'قيد جديد';
+                html = `
+                    <div class="form-group"><label>التاريخ</label><input type="date" id="journal-date" value="${new Date().toISOString().split('T')[0]}"></div>
+                    <div class="form-group"><label>الوصف</label><input type="text" id="journal-desc" placeholder="描述这笔交易"></div>
+                    <div class="form-group">
+                        <label>مدين</label>
+                        <select id="journal-debit-account">${accounts.map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('')}</select>
+                    </div>
+                    <div class="form-group"><label>مبلغ المدين</label><input type="number" id="journal-debit-amount" placeholder="0.00" step="0.01"></div>
+                    <div class="form-group">
+                        <label>دائن</label>
+                        <select id="journal-credit-account">${accounts.map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('')}</select>
+                    </div>
+                    <div class="form-group"><label>مبلغ الدائن</label><input type="number" id="journal-credit-amount" placeholder="0.00" step="0.01"></div>
+                    <button class="btn btn-primary w-full mt-2" onclick="saveJournal()">ترحيل</button>
+                `;
+            }
+            
+            body.innerHTML = html;
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('generic-modal').classList.remove('active');
+        }
+        
+        function saveExpense() {
+            const description = document.getElementById('expense-desc').value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const category = document.getElementById('expense-category').value;
+            const date = document.getElementById('expense-date').value;
+            
+            const expenses = DB.getData('expenses');
+            expenses.push({
+                id: Date.now(),
+                description,
+                amount,
+                category,
+                date
+            });
+            DB.setData('expenses', expenses);
+            
+            // Update expense account
+            updateAccountBalance(17, amount); // Expense account
+            
+            closeModal();
+            navigate(currentPage);
+            if (currentPage === 'dashboard') loadDashboard();
+        }
+        
+        function saveInvoice() {
+            const customerName = document.getElementById('invoice-customer').value;
+            const itemsText = document.getElementById('invoice-items').value;
+            const taxRate = parseFloat(document.getElementById('invoice-tax').value) || 0;
+            const dueDate = document.getElementById('invoice-due').value;
+            
+            if (!customerName) return alert('اختر العميل');
+            
+            // Parse items
+            const lines = itemsText.split('\n').filter(l => l.trim()).map(line => {
+                const parts = line.split(',');
+                return {
+                    description: parts[0]?.trim() || 'منتج',
+                    quantity: parseFloat(parts[1]) || 1,
+                    unitPrice: parseFloat(parts[2]) || 0
+                };
+            });
+            
+            const subtotal = lines.reduce((sum, l) => sum + (l.quantity * l.unitPrice), 0);
+            const tax = subtotal * (taxRate / 100);
+            const total = subtotal + tax;
+            
+            const invoices = DB.getData('invoices');
+            const invoiceNumber = 'INV-' + String(invoices.length + 1).padStart(4, '0');
+            
+            invoices.push({
+                id: Date.now(),
+                number: invoiceNumber,
+                customerName,
+                lines,
+                subtotal,
+                tax,
+                total,
+                taxRate,
+                dueDate,
+                date: new Date().toISOString().split('T')[0],
+                status: 'draft'
+            });
+            DB.setData('invoices', invoices);
+            
+            // Update AR if not paid
+            if (document.getElementById('invoice-paid')?.checked) {
+                updateAccountBalance(1000, total); // Cash
+            } else {
+                updateAccountBalance(1100, total); // AR
+            }
+            
+            closeModal();
+            loadInvoices();
+            loadDashboard();
+        }
+        
+        function saveBill() {
+            const vendorName = document.getElementById('bill-vendor').value;
+            const itemsText = document.getElementById('bill-items').value;
+            const taxRate = parseFloat(document.getElementById('bill-tax').value) || 0;
+            const dueDate = document.getElementById('bill-due').value;
+            
+            if (!vendorName) return alert('اختر المورد');
+            
+            const lines = itemsText.split('\n').filter(l => l.trim()).map(line => {
+                const parts = line.split(',');
+                return {
+                    description: parts[0]?.trim() || 'منتج',
+                    quantity: parseFloat(parts[1]) || 1,
+                    unitPrice: parseFloat(parts[2]) || 0
+                };
+            });
+            
+            const subtotal = lines.reduce((sum, l) => sum + (l.quantity * l.unitPrice), 0);
+            const tax = subtotal * (taxRate / 100);
+            const total = subtotal + tax;
+            
+            const bills = DB.getData('bills');
+            bills.push({
+                id: Date.now(),
+                number: 'BILL-' + String(bills.length + 1).padStart(4, '0'),
+                vendorName,
+                lines,
+                subtotal,
+                tax,
+                total,
+                dueDate,
+                date: new Date().toISOString().split('T')[0],
+                status: 'draft'
+            });
+            DB.setData('bills', bills);
+            
+            closeModal();
+            loadBills();
+        }
+        
+        function saveCustomer() {
+            const name = document.getElementById('cust-name').value;
+            const email = document.getElementById('cust-email').value;
+            const phone = document.getElementById('cust-phone').value;
+            const address = document.getElementById('cust-address').value;
+            
+            if (!name) return alert('أدخل الاسم');
+            
+            const customers = DB.getData('customers');
+            customers.push({ id: Date.now(), name, email, phone, address });
+            DB.setData('customers', customers);
+            
+            closeModal();
+            loadCustomers();
+        }
+        
+        function saveVendor() {
+            const name = document.getElementById('vend-name').value;
+            const email = document.getElementById('vend-email').value;
+            const phone = document.getElementById('vend-phone').value;
+            
+            if (!name) return alert('أدخل الاسم');
+            
+            const vendors = DB.getData('vendors');
+            vendors.push({ id: Date.now(), name, email, phone });
+            DB.setData('vendors', vendors);
+            
+            closeModal();
+            loadVendors();
+        }
+        
+        function saveAccount() {
+            const code = document.getElementById('acc-code').value;
+            const name = document.getElementById('acc-name').value;
+            const type = document.getElementById('acc-type').value;
+            
+            if (!code || !name) return alert('أدخل الكود والاسم');
+            
+            const accounts = DB.getData('accounts');
+            if (accounts.find(a => a.code === code)) return alert('الكود موجود');
+            
+            accounts.push({ id: Date.now(), code, name, type, balance: 0 });
+            DB.setData('accounts', accounts);
+            
+            closeModal();
+            loadAccounts();
+        }
+        
+        function saveJournal() {
+            const date = document.getElementById('journal-date').value;
+            const description = document.getElementById('journal-desc').value;
+            const debitAccountId = parseInt(document.getElementById('journal-debit-account').value);
+            const debitAmount = parseFloat(document.getElementById('journal-debit-amount').value) || 0;
+            const creditAccountId = parseInt(document.getElementById('journal-credit-account').value);
+            const creditAmount = parseFloat(document.getElementById('journal-credit-amount').value) || 0;
+            
+            if (!description) return alert('أدخل الوصف');
+            if (Math.abs(debitAmount - creditAmount) > 0.01) return alert('المدين والدائن يجب أن يكونا متساويين');
+            
+            const journal = DB.getData('journal');
+            journal.push({
+                id: Date.now(),
+                number: 'JE-' + String(journal.length + 1).padStart(4, '0'),
+                date,
+                description,
+                debitAccountId,
+                debitAmount,
+                creditAccountId,
+                creditAmount,
+                status: 'posted'
+            });
+            DB.setData('journal', journal);
+            
+            // Update account balances
+            updateAccountBalance(debitAccountId, debitAmount);
+            updateAccountBalance(creditAccountId, -creditAmount);
+            
+            closeModal();
+            loadJournal();
+            loadDashboard();
+        }
+        
+        function updateAccountBalance(accountId, amount) {
+            const accounts = DB.getData('accounts');
+            const idx = accounts.findIndex(a => a.id === accountId);
+            if (idx >= 0) {
+                accounts[idx].balance = (accounts[idx].balance || 0) + amount;
+                DB.setData('accounts', accounts);
+            }
+        }
+        
+        function deleteInvoice(id) {
+            if (!confirm('حذف الفاتورة؟')) return;
+            const invoices = DB.getData('invoices').filter(i => i.id !== id);
+            DB.setData('invoices', invoices);
+            loadInvoices();
+            loadDashboard();
+        }
+        
+        function deleteBill(id) {
+            if (!confirm('حذف الفاتورة؟')) return;
+            const bills = DB.getData('bills').filter(b => b.id !== id);
+            DB.setData('bills', bills);
+            loadBills();
+        }
+        
+        function deleteExpense(id) {
+            if (!confirm('حذف المصروف؟')) return;
+            const expenses = DB.getData('expenses').filter(e => e.id !== id);
+            DB.setData('expenses', expenses);
+            loadExpenses();
+            loadDashboard();
+        }
+        
+        function deleteAccount(id) {
+            if (!confirm('حذف الحساب؟')) return;
+            const accounts = DB.getData('accounts').filter(a => a.id !== id);
+            DB.setData('accounts', accounts);
+            loadAccounts();
+        }
+        
+        function deleteJournal(id) {
+            if (!confirm('حذف القيد؟')) return;
+            const journal = DB.getData('journal').filter(j => j.id !== id);
+            DB.setData('journal', journal);
+            loadJournal();
+        }
+        
+        function deleteCustomer(id) {
+            if (!confirm('حذف العميل؟')) return;
+            const customers = DB.getData('customers').filter(c => c.id !== id);
+            DB.setData('customers', customers);
+            loadCustomers();
+        }
+        
+        function deleteVendor(id) {
+            if (!confirm('حذف المورد؟')) return;
+            const vendors = DB.getData('vendors').filter(v => v.id !== id);
+            DB.setData('vendors', vendors);
+            loadVendors();
+        }
+        
+        function updateInvoiceStatus(id, status) {
+            const invoices = DB.getData('invoices');
+            const idx = invoices.findIndex(i => i.id === id);
+            if (idx >= 0) {
+                invoices[idx].status = status;
+                DB.setData('invoices', invoices);
+                
+                // Move from AR to Cash
+                if (status === 'paid') {
+                    updateAccountBalance(1000, invoices[idx].total);
+                    updateAccountBalance(1100, -invoices[idx].total);
+                    updateAccountBalance(4000, invoices[idx].total);
+                }
+            }
+            loadInvoices();
+            loadDashboard();
+        }
+        
+        function updateBillStatus(id, status) {
+            const bills = DB.getData('bills');
+            const idx = bills.findIndex(b => b.id === id);
+            if (idx >= 0) {
+                bills[idx].status = status;
+                DB.setData('bills', bills);
+            }
+            loadBills();
+        }
+        
+        function resetData() {
+            if (!confirm('سيتم حذف جميع البيانات. هل أنت متأكد؟')) return;
+            localStorage.clear();
+            location.reload();
+        }
+        
+        function formatCurrency(amount) {
+            return '$' + (amount || 0).toFixed(2);
+        }
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
